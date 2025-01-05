@@ -1,9 +1,9 @@
 import os
-from pydantic import BaseModel
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 import mysql.connector
+from pydantic import BaseModel
 
 
 app = FastAPI()
@@ -84,3 +84,26 @@ def verify_qr(qr_code: QRCode):
             return {"message": "QRコードが正しいです", "route_name": route_name, "is_peak": False}
     else:
         return {"message": "QRコードが無効です"}
+
+
+# 特典の取得
+@app.post("/get_gift/")
+def get_gift(account: Account):
+    connection = mysql.connector.connect(**db_config)
+    cursor = connection.cursor()
+    cursor.execute("SELECT COUNT(*) FROM stamps WHERE username = %s AND is_peak = True", (account.username,))
+    peak_count = cursor.fetchone()[0]
+    cursor.close()
+    connection.close()
+    print(peak_count)
+
+    # if peak_count >= 10:
+    #     return {"message": "特典を獲得しました", "gift": "Special Gift"}
+    # else:
+    #     return {"message": "特典を獲得するには、10個のピークスタンプが必要です", "current_peak_count": peak_count}
+
+
+if __name__ == "__main__":
+    user_init = Account(username="test", email="test@test.te", password="test")
+    create_account(user_init)
+    get_gift(user_init)
